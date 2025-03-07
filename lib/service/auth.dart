@@ -7,24 +7,20 @@ class AuthMethods {
   final FirebaseAuth auth = FirebaseAuth.instance;
 
   Future<void> SignOut(BuildContext context) async {
-    // Pass context
     try {
       await auth.signOut();
-      // Clear shared preferences
       await SharedPreferenceHelper().saveUserId("");
       await SharedPreferenceHelper().saveUserName("");
       await SharedPreferenceHelper().saveUserPhoneNumber("");
       await SharedPreferenceHelper().saveUserEmail("");
       await SharedPreferenceHelper().saveUserProfile("");
 
-      // Navigate to Login screen (replace current route)
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const Login()),
       );
     } catch (e) {
       print("Error signing out: $e");
-      // Handle the error (e.g., show a snackbar)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error signing out: $e"),

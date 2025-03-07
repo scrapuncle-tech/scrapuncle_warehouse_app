@@ -16,7 +16,7 @@ class _LoginState extends State<Login> {
   TextEditingController userEmailController = TextEditingController();
   TextEditingController userPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false; // Add a loading indicator
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -28,18 +28,16 @@ class _LoginState extends State<Login> {
   userLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
-        _isLoading = true; // Start loading
+        _isLoading = true;
       });
       try {
         await FirebaseAuth.instance
             .signInWithEmailAndPassword(email: email, password: password);
 
-        // Check if the widget is still mounted before navigating
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-                builder: (context) => HomePage()), // Navigate to Warehouse Home
+            MaterialPageRoute(builder: (context) => HomePage()),
           );
         }
       } on FirebaseAuthException catch (e) {
@@ -50,7 +48,6 @@ class _LoginState extends State<Login> {
           errorMessage = "Wrong Password provided by User";
         }
 
-        // Check if the widget is still mounted before showing the snackbar
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             backgroundColor: Colors.red,
@@ -61,10 +58,9 @@ class _LoginState extends State<Login> {
           ));
         }
       } finally {
-        // Ensure loading is stopped even on error
         if (mounted) {
           setState(() {
-            _isLoading = false; // Stop loading
+            _isLoading = false;
           });
         }
       }
@@ -75,12 +71,12 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Supervisor Login"), // Changed Appbar title
+        title: const Text("Supervisor Login"),
         backgroundColor: Colors.green,
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(), // Show loading indicator
+              child: CircularProgressIndicator(),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20.0),
@@ -92,8 +88,7 @@ class _LoginState extends State<Login> {
                   children: [
                     Center(
                       child: Image.asset('images/ScrapUncle.png',
-                          height: 200,
-                          width: 300), // Replace with appropriate asset
+                          height: 200, width: 300),
                     ),
                     const SizedBox(height: 20),
                     TextFormField(

@@ -7,11 +7,11 @@ import 'package:random_string/random_string.dart';
 import 'package:scrapuncle_warehouse/service/database.dart';
 import 'package:scrapuncle_warehouse/service/shared_pref.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:path_provider/path_provider.dart'; // Import for local storage
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
 
 class AddItem extends StatefulWidget {
-  final String phoneNumber; // Receive phone number from PickupPage
+  final String phoneNumber;
 
   const AddItem({Key? key, required this.phoneNumber}) : super(key: key);
 
@@ -22,24 +22,22 @@ class AddItem extends StatefulWidget {
 class _AddItemState extends State<AddItem> {
   TextEditingController nameController = TextEditingController();
   TextEditingController weightController = TextEditingController();
-  TextEditingController vehicleNumberController =
-      TextEditingController(); //Vehicle number
-  TextEditingController driverPhoneNumberController =
-      TextEditingController(); //Driver phone number
+  TextEditingController vehicleNumberController = TextEditingController();
+  TextEditingController driverPhoneNumberController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
-  File? selectedItemImage; //Item Image
-  File? selectedVehicleImage; //Vehicle Image
-  File? selectedDriverImage; //Driver Image
+  File? selectedItemImage;
+  File? selectedVehicleImage;
+  File? selectedDriverImage;
   String? userId;
-  String currentTime = ""; // Store the real-time date and time
-  bool _isLoading = false; // Add a loading indicator
+  String currentTime = "";
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     initialize();
     // Set the initial time
-    currentTime = DateFormat('yyyy-MM-dd – kk:mm').format(DateTime.now());
+    currentTime = DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now());
 
     // Update the time every minute
     Future.delayed(Duration.zero, () async {
@@ -48,7 +46,7 @@ class _AddItemState extends State<AddItem> {
         if (mounted) {
           setState(() {
             currentTime =
-                DateFormat('yyyy-MM-dd – kk:mm').format(DateTime.now());
+                DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now());
           });
         }
       }
@@ -107,9 +105,8 @@ class _AddItemState extends State<AddItem> {
     if (selectedItemImage != null &&
         nameController.text.isNotEmpty &&
         weightController.text.isNotEmpty &&
-        vehicleNumberController.text.isNotEmpty && //Vehicle Number is added
-        driverPhoneNumberController
-            .text.isNotEmpty && //Driver Phone Number is added
+        vehicleNumberController.text.isNotEmpty &&
+        driverPhoneNumberController.text.isNotEmpty &&
         userId != null) {
       String addId = randomAlphaNumeric(10);
 
@@ -150,14 +147,13 @@ class _AddItemState extends State<AddItem> {
 
         Map<String, dynamic> addItem = {
           "ItemImage": itemDownloadUrl,
-          "PhoneNumber": widget.phoneNumber, // Use passed phone number
+          "PhoneNumber": widget.phoneNumber,
           "Name": nameController.text,
           "WeightOrQuantity": weightController.text,
-          "VehicleNumber": vehicleNumberController.text, //Vehicle number
-          "VehicleImage": vehicleDownloadUrl, //vehicle photo
-          "DriverPhoneNumber":
-              driverPhoneNumberController.text, //Driver phone number
-          "DriverImage": driverDownloadUrl, //Driver Photo
+          "VehicleNumber": vehicleNumberController.text,
+          "VehicleImage": vehicleDownloadUrl,
+          "DriverPhoneNumber": driverPhoneNumberController.text,
+          "DriverImage": driverDownloadUrl,
           "userId": userId,
           "itemId": addId,
           "DateTime": currentTime,
@@ -203,10 +199,8 @@ class _AddItemState extends State<AddItem> {
     }
   }
 
-  // Function to add data to Firebase Realtime Database
   Future<void> addDataToRealtimeDatabase(Map<String, dynamic> itemData) async {
-    DatabaseReference ref =
-        FirebaseDatabase.instance.ref(); // Get reference to the root
+    DatabaseReference ref = FirebaseDatabase.instance.ref();
     try {
       await ref
           .child('items')
@@ -239,7 +233,7 @@ class _AddItemState extends State<AddItem> {
         ),
         body: _isLoading
             ? const Center(
-                child: CircularProgressIndicator(), // Show loading indicator
+                child: CircularProgressIndicator(),
               )
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(20.0),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:scrapuncle_warehouse/service/auth.dart';
 import 'package:scrapuncle_warehouse/service/shared_pref.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:scrapuncle_warehouse/pages/details.dart'; //Import the details.dart file
+import 'package:scrapuncle_warehouse/pages/details.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -61,12 +61,10 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 10),
-            // Use StreamBuilder to fetch and display completed pickups
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
-                  .collectionGroup('items') // Access all 'items' collections
-                  .where('isVerified',
-                      isEqualTo: true) // Filter for verified items
+                  .collectionGroup('items')
+                  .where('isVerified', isEqualTo: true)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -90,14 +88,11 @@ class _HomePageState extends State<HomePage> {
                         as Map<String, dynamic>;
 
                     return GestureDetector(
-                      //Wrapping the Card Widget with GestureDetector
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => Details(
-                                itemData:
-                                    itemData), //Navigating to the Details Page and passing itemData
+                            builder: (context) => Details(itemData: itemData),
                           ),
                         );
                       },

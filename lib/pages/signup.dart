@@ -43,17 +43,14 @@ class _SignUpState extends State<SignUp> {
           'id': Id,
         };
 
-        await DatabaseMethods().addSupervisorDetail(
-            addSupervisorInfo, Id); // Store in "supervisors" collection
+        await DatabaseMethods().addSupervisorDetail(addSupervisorInfo, Id);
 
         // Optionally save supervisor info to Shared Preferences (if needed)
+        await SharedPreferenceHelper().saveUserName(nameController.text);
         await SharedPreferenceHelper()
-            .saveUserName(nameController.text); //can comment this
-        await SharedPreferenceHelper()
-            .saveUserPhoneNumber(phoneController.text); //can comment this
-        await SharedPreferenceHelper()
-            .saveUserEmail(emailController.text); //can comment this
-        await SharedPreferenceHelper().saveUserId(Id); //can comment this
+            .saveUserPhoneNumber(phoneController.text);
+        await SharedPreferenceHelper().saveUserEmail(emailController.text);
+        await SharedPreferenceHelper().saveUserId(Id);
 
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           backgroundColor: Colors.green,
@@ -65,7 +62,7 @@ class _SignUpState extends State<SignUp> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const Login()), // Go to Login
+          MaterialPageRoute(builder: (context) => const Login()),
         );
       } on FirebaseAuthException catch (e) {
         String errorMessage = "An error occurred";
@@ -102,8 +99,8 @@ class _SignUpState extends State<SignUp> {
         child: Column(
           children: [
             Center(
-              child: Image.asset('images/ScrapUncle.png',
-                  height: 200, width: 300), // Replace with appropriate asset
+              child:
+                  Image.asset('images/ScrapUncle.png', height: 200, width: 300),
             ),
             const SizedBox(height: 20),
             Form(

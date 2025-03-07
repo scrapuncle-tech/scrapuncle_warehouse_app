@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:scrapuncle_warehouse/service/database.dart'; // For fetching items
-import 'package:cloud_firestore/cloud_firestore.dart'; // For Firestore queries
+import 'package:scrapuncle_warehouse/service/database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PickupPage extends StatefulWidget {
   const PickupPage({Key? key}) : super(key: key);
@@ -11,8 +11,8 @@ class PickupPage extends StatefulWidget {
 
 class _PickupPageState extends State<PickupPage> {
   TextEditingController phoneController = TextEditingController();
-  List<Map<String, dynamic>> items = []; // List to store fetched items
-  List<bool> itemVerificationStatus = []; // List to track verification status
+  List<Map<String, dynamic>> items = [];
+  List<bool> itemVerificationStatus = [];
   String? userId;
 
   @override
@@ -34,8 +34,7 @@ class _PickupPageState extends State<PickupPage> {
 
     setState(() {
       items = fetchedItems;
-      itemVerificationStatus =
-          List.filled(items.length, false); // Initialize verification status
+      itemVerificationStatus = List.filled(items.length, false);
     });
   }
 
@@ -62,12 +61,9 @@ class _PickupPageState extends State<PickupPage> {
       return;
     }
 
-    // **Get the user id from the phone number**
     QuerySnapshot userQuery = await FirebaseFirestore.instance
         .collection('users')
-        .where('PhoneNumber',
-            isEqualTo:
-                phoneNumber) //find the document where PhoneNumber field is equal to the phone number
+        .where('PhoneNumber', isEqualTo: phoneNumber)
         .get();
 
     if (userQuery.docs.isEmpty) {
@@ -84,7 +80,6 @@ class _PickupPageState extends State<PickupPage> {
         String itemId = items[i]['itemId'];
         bool isVerified = itemVerificationStatus[i];
 
-        // Update the 'isVerified' field in Firestore for each item
         await FirebaseFirestore.instance
             .collection('users')
             .doc(userId)
@@ -97,11 +92,10 @@ class _PickupPageState extends State<PickupPage> {
         print("Item $itemId verification status updated to $isVerified"); // Log
       }
 
-      // After successful update:
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Pickup completed successfully!")),
       );
-      Navigator.pop(context); // Go back to the home page
+      Navigator.pop(context);
     } catch (e) {
       print("Error completing pickup: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -174,8 +168,7 @@ class _PickupPageState extends State<PickupPage> {
                             : Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(5.0),
                       ),
-                      child: Text(items[index]['Name'] ??
-                          'Item Name'), // Display item name
+                      child: Text(items[index]['Name'] ?? 'Item Name'),
                     ),
                   );
                 },

@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "894251245466",
+    "project_id": "scrapuncle-452708",
+    "storage_bucket": "scrapuncle-452708.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:894251245466:android:83a828d2b38fb558592423",
+        "android_client_info": {
+          "package_name": "com.example.scrapuncle"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "894251245466-hc0lmpmijd07b72v62f3vde55a9hgmqo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAosIjIIM_3BtnZtKXFvZi7xSfd5LVVAVA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "894251245466-hc0lmpmijd07b72v62f3vde55a9hgmqo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "894251245466-ua07im5qf9n3lk99ka9jsa7qb5325lss.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.scrapuncle"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:894251245466:android:9b66322ab9ef5dd2592423",
+        "android_client_info": {
+          "package_name": "com.example.scrapuncle_warehouse"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "894251245466-hc0lmpmijd07b72v62f3vde55a9hgmqo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAosIjIIM_3BtnZtKXFvZi7xSfd5LVVAVA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "894251245466-hc0lmpmijd07b72v62f3vde55a9hgmqo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "894251245466-ua07im5qf9n3lk99ka9jsa7qb5325lss.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.scrapuncle"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,2 @@
+/Users/vamp/StudioProjects/scrapuncle_warehouse_app/android/app/.cxx/Debug/5d3t4n6p/x86/CMakeFiles/edit_cache.dir
+/Users/vamp/StudioProjects/scrapuncle_warehouse_app/android/app/.cxx/Debug/5d3t4n6p/x86/CMakeFiles/rebuild_cache.dir

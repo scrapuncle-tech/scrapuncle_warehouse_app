@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:scrapuncle_warehouse/pages/home.dart';
 import 'package:scrapuncle_warehouse/pages/login.dart'; // Navigate to Login after signup
 import 'package:scrapuncle_warehouse/service/database.dart'; // Import DatabaseMethods
 import 'package:scrapuncle_warehouse/service/shared_pref.dart'; // Import SharedPreferenceHelper
@@ -51,6 +52,7 @@ class _SignUpState extends State<SignUp> {
             .saveUserPhoneNumber(phoneController.text);
         await SharedPreferenceHelper().saveUserEmail(emailController.text);
         await SharedPreferenceHelper().saveUserId(Id);
+        print(Id);
 
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           backgroundColor: Colors.green,
@@ -62,7 +64,7 @@ class _SignUpState extends State<SignUp> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const Login()),
+          MaterialPageRoute(builder: (context) => const HomePage()),
         );
       } on FirebaseAuthException catch (e) {
         String errorMessage = "An error occurred";

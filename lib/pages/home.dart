@@ -44,56 +44,72 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
+      body: Column(
+        // Removed SingleChildScrollView
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Text(
               "SupervisorID: ${supervisorId ?? 'Supervisor'}!", // Show the supervisorId now, not UID
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+          ),
+          const Padding(
+            padding: EdgeInsets.only(left: 20.0),
+            child: Text(
               "Completed Pickups",
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 10),
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('whpickup')
-                  .where('supervisorId',
-                      isEqualTo:
-                          supervisorId) //Now compare with the supervisor id
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                }
+          ),
+          const SizedBox(height: 10),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('whpickup')
+                .where('supervisorId',
+                    isEqualTo:
+                        supervisorId) //Now compare with the supervisor id
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text('Error: ${snapshot.error}'),
+                );
+              }
 
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                }
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Text('No completed pickups yet.');
-                }
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: Text('No completed pickups yet.'),
+                );
+              }
 
-                return ListView.builder(
+              return Expanded(
+                // Added Expanded
+                child: ListView.builder(
                   shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
+                  physics:
+                      const AlwaysScrollableScrollPhysics(), // Ensure scrolling works
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
                     var itemData = snapshot.data!.docs[index].data()
                         as Map<String, dynamic>;
 
-                    return GestureDetector(
+                    return InkWell(
+                      // Changed to InkWell for tap feedback
                       onTap: () {
                         Navigator.push(
                           context,
@@ -103,7 +119,8 @@ class _HomePageState extends State<HomePage> {
                         );
                       },
                       child: Card(
-                        margin: const EdgeInsets.symmetric(vertical: 10),
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 20),
                         child: Padding(
                           padding: const EdgeInsets.all(10.0),
                           child: Column(
@@ -114,21 +131,21 @@ class _HomePageState extends State<HomePage> {
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold),
                               ),
-                              Text(
-                                  "Price: ${itemData['price'] ?? 'N/A'}"), // changed to the products' prices
-                              Text(
-                                  "Unit: ${itemData['unit'] ?? 'N/A'}"), // added the products' unit
+                              Text("Price: ${itemData['price'] ?? 'N/A'}"),
+                              // changed to the products' prices
+                              Text("Unit: ${itemData['unit'] ?? 'N/A'}"),
+                              // added the products' unit
                             ],
                           ),
                         ),
                       ),
                     );
                   },
-                );
-              },
-            ),
-          ],
-        ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

@@ -137,21 +137,21 @@ class _PickupPageState extends State<PickupPage> {
               ),
             ),
             const SizedBox(height: 10.0),
-            Expanded(
-              child: ListView.builder(
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  return CheckboxListTile(
-                    title: Text(products[index]['name'] ?? 'Product Name'),
-                    value: products[index]['isCollected'] ?? false,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        products[index]['isCollected'] = value ?? false;
-                      });
-                    },
-                  );
-                },
-              ),
+            ListView.builder(
+              shrinkWrap: true, // add this
+              physics: const NeverScrollableScrollPhysics(), // add this
+              itemCount: products.length,
+              itemBuilder: (context, index) {
+                return CheckboxListTile(
+                  title: Text(products[index]['name'] ?? 'Product Name'),
+                  value: products[index]['isCollected'] ?? false,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      products[index]['isCollected'] = value ?? false;
+                    });
+                  },
+                );
+              },
             ),
             const SizedBox(height: 20.0),
             ElevatedButton(

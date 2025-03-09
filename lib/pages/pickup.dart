@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:scrapuncle_warehouse/service/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:scrapuncle_warehouse/service/shared_pref.dart';
+import 'package:scrapuncle_warehouse/pages/add_item.dart';
 
 class PickupPage extends StatefulWidget {
   const PickupPage({Key? key}) : super(key: key);
@@ -128,6 +129,20 @@ class _PickupPageState extends State<PickupPage> {
               },
               child: const Text("Get Products"),
             ),
+            const SizedBox(height: 20.0), // Spacing
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        AddItem(phoneNumber: phoneController.text),
+                  ),
+                );
+              },
+              child: const Text("Add Details"),
+            ),
+
             const SizedBox(height: 20.0),
             const Text(
               "Products:",

@@ -13,18 +13,18 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String? supervisorUid; // Firebase Auth UID
-  String? supervisorId; // ID from Firestore
+  String? supervisorPhone; //  Phone Number
 
   @override
   void initState() {
     super.initState();
-    getSupervisorIds();
+    getSupervisorDetails();
   }
 
-  Future<void> getSupervisorIds() async {
+  Future<void> getSupervisorDetails() async {
     supervisorUid = await SharedPreferenceHelper().getUserId();
-    supervisorId =
-        await SharedPreferenceHelper().getSupervisorId(); //Get supervisorId
+    supervisorPhone = await SharedPreferenceHelper()
+        .getUserPhoneNumber(); //Get phonenumber from sharedpreferences
 
     setState(() {});
   }
@@ -51,7 +51,7 @@ class _HomePageState extends State<HomePage> {
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Text(
-              "SupervisorID: ${supervisorId ?? 'Supervisor'}!", // Show the supervisorId now, not UID
+              "Supervisor: ${supervisorPhone ?? 'Supervisor'}!", // Show the supervisorPhone now
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -72,9 +72,9 @@ class _HomePageState extends State<HomePage> {
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('whpickup')
-                .where('supervisorId',
+                .where('supervisorPhoneNumber',
                     isEqualTo:
-                        supervisorId) //Now compare with the supervisor id
+                        supervisorPhone) //Now compare with the supervisor phone
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {

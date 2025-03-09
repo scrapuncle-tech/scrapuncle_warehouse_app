@@ -1,9 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:scrapuncle_warehouse/pages/home.dart';
-import 'package:scrapuncle_warehouse/pages/login.dart'; // Navigate to Login after signup
-import 'package:scrapuncle_warehouse/service/database.dart'; // Import DatabaseMethods
-import 'package:scrapuncle_warehouse/service/shared_pref.dart'; // Import SharedPreferenceHelper
+import 'package:scrapuncle_warehouse/pages/login.dart';
+import 'package:scrapuncle_warehouse/service/database.dart';
+import 'package:scrapuncle_warehouse/service/shared_pref.dart';
 import 'package:random_string/random_string.dart';
 
 class SignUp extends StatefulWidget {
@@ -64,7 +63,7 @@ class _SignUpState extends State<SignUp> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(builder: (context) => const Login()),
         );
       } on FirebaseAuthException catch (e) {
         String errorMessage = "An error occurred";

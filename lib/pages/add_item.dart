@@ -23,6 +23,7 @@ class AddItem extends StatefulWidget {
 class _AddItemState extends State<AddItem> {
   TextEditingController driverPhoneNumberController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
+  TextEditingController itemNameController = TextEditingController();
   File? selectedItemImage;
   File? selectedDriverImage;
   String? userId;
@@ -121,6 +122,7 @@ class _AddItemState extends State<AddItem> {
 
         Map<String, dynamic> whitems = {
           "ItemImage": itemDownloadUrl,
+          "ItemName": itemNameController.text,
           "DriverPhoneNumber": driverPhoneNumberController.text,
           "DriverImage": driverDownloadUrl,
           "userId": userId,
@@ -248,6 +250,21 @@ class _AddItemState extends State<AddItem> {
                                     ),
                                   ),
                           ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30.0),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      decoration: BoxDecoration(
+                        color: Colors.green[100],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: TextField(
+                        controller: itemNameController,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: "Enter Item Name",
                         ),
                       ),
                     ),

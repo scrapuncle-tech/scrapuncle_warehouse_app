@@ -25,10 +25,12 @@ class _SignUpState extends State<SignUp> {
   registration() async {
     if (_formKey.currentState!.validate()) {
       if (passwordController.text != retypePasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          backgroundColor: Colors.red,
-          content: Text("Passwords do not match"),
-        ));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            backgroundColor: Colors.red,
+            content: Text("Passwords do not match"),
+          ));
+        }
         return;
       }
       try {
@@ -45,26 +47,8 @@ class _SignUpState extends State<SignUp> {
 
         await DatabaseMethods().addUserDetail(addSupervisorInfo, Id);
 
-        // Optionally save supervisor info to Shared Preferences (if needed)
-        await SharedPreferenceHelper().saveUserName(nameController.text);
-        await SharedPreferenceHelper()
-            .saveUserPhoneNumber(phoneController.text);
-        await SharedPreferenceHelper().saveUserEmail(emailController.text);
-        await SharedPreferenceHelper().saveUserId(Id);
         print(Id);
-
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          backgroundColor: Colors.green,
-          content: Text(
-            "Registered Successfully. Please Login.",
-            style: TextStyle(fontSize: 20),
-          ),
-        ));
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Login()),
-        );
+        print("Success Uploading the Info!");
       } on FirebaseAuthException catch (e) {
         String errorMessage = "An error occurred";
         if (e.code == 'weak-password') {
@@ -72,18 +56,22 @@ class _SignUpState extends State<SignUp> {
         } else if (e.code == 'email-already-in-use') {
           errorMessage = "Account Already exists";
         }
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          backgroundColor: Colors.red,
-          content: Text(
-            errorMessage,
-            style: const TextStyle(fontSize: 18),
-          ),
-        ));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: Colors.red,
+            content: Text(
+              errorMessage,
+              style: const TextStyle(fontSize: 18),
+            ),
+          ));
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          backgroundColor: Colors.red,
-          content: Text("An unexpected error occurred: $e"),
-        ));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: Colors.red,
+            content: Text("An unexpected error occurred: $e"),
+          ));
+        }
       }
     }
   }

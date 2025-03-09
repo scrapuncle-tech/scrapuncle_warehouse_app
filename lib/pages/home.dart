@@ -3,6 +3,7 @@ import 'package:scrapuncle_warehouse/service/auth.dart';
 import 'package:scrapuncle_warehouse/service/shared_pref.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:scrapuncle_warehouse/pages/details.dart';
+import 'package:intl/intl.dart'; // Import intl package
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -31,6 +32,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Get today's date in the same format as stored in Firestore
+    String todayDate = DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now());
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Warehouse - Home"),
@@ -71,10 +75,8 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 10),
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
-                .collection('whpickup')
-                .where('supervisorPhoneNumber',
-                    isEqualTo:
-                        supervisorPhone) //Now compare with the supervisor phone
+                .collection('whitems')
+                .where('supervisorPhoneNumber', isEqualTo: supervisorPhone)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
@@ -127,13 +129,11 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Item Name: ${itemData['name'] ?? 'N/A'}",
+                                "Item Name: ${itemData['ItemName'] ?? 'N/A'}", // changed to new field name
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold),
                               ),
-                              Text("Price: ${itemData['price'] ?? 'N/A'}"),
-                              // changed to the products' prices
-                              Text("Unit: ${itemData['unit'] ?? 'N/A'}"),
+
                               // added the products' unit
                             ],
                           ),

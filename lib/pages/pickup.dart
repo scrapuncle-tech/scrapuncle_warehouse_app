@@ -121,7 +121,7 @@ class _PickupPageState extends State<PickupPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Enter Pickup Agent's Phone Number",
+              "Enter Supervisor incharge's Phone Number",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

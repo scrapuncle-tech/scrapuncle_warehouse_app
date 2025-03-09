@@ -2,12 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:random_string/random_string.dart';
 
 class DatabaseMethods {
-  Future addSupervisorDetail(
-      Map<String, dynamic> supervisorInfoMap, String id) async {
+  Future addUserDetail(Map<String, dynamic> userInfoMap, String id) async {
     return await FirebaseFirestore.instance
-        .collection("supervisors")
+        .collection("supervisors") // Changed to "supervisors"
         .doc(id)
-        .set(supervisorInfoMap);
+        .set(userInfoMap);
   }
 
   Future<void> addItem(
@@ -34,66 +33,5 @@ class DatabaseMethods {
     } catch (e) {
       print("Error adding item data to Firestore: $e");
     }
-  }
-
-  Stream<QuerySnapshot> getUploadedItems(String userId) {
-    if (userId == null || userId.isEmpty) {
-      print("Warning: User ID is null or empty. Returning empty stream.");
-      return const Stream<QuerySnapshot>.empty();
-    }
-    try {
-      return FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection("phoneNumbers")
-          .snapshots();
-    } catch (e) {
-      print("Error getting uploaded items stream: $e");
-      return const Stream<QuerySnapshot>.empty();
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> getItemsByPhoneNumber(
-      String phoneNumber) async {
-    List<Map<String, dynamic>> items = [];
-
-    //IMPORTANT: This assumes your data is structured as users/(userId)/PhoneNumber = phoneNumber
-
-    QuerySnapshot userQuery = await FirebaseFirestore.instance
-        .collection('users')
-        .where('PhoneNumber', isEqualTo: phoneNumber)
-        .get();
-
-    if (userQuery.docs.isNotEmpty) {
-      String userId = userQuery.docs.first.id;
-
-      DocumentSnapshot phoneNumberSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection("phoneNumbers")
-          .doc(phoneNumber)
-          .get();
-
-      if (phoneNumberSnapshot.exists) {
-        QuerySnapshot itemsSnapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .collection("phoneNumbers")
-            .doc(phoneNumber)
-            .collection("items")
-            .get();
-
-        for (var doc in itemsSnapshot.docs) {
-          items.add(doc.data() as Map<String, dynamic>);
-        }
-      } else {
-        print(
-            "No phone number document exist for user with ID: $userId and phone number: $phoneNumber");
-      }
-    } else {
-      print("No user found with phone number: $phoneNumber");
-    }
-
-    return items;
   }
 }

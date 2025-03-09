@@ -43,7 +43,7 @@ class _SignUpState extends State<SignUp> {
           'id': Id,
         };
 
-        await DatabaseMethods().addSupervisorDetail(addSupervisorInfo, Id);
+        await DatabaseMethods().addUserDetail(addSupervisorInfo, Id);
 
         // Optionally save supervisor info to Shared Preferences (if needed)
         await SharedPreferenceHelper().saveUserName(nameController.text);

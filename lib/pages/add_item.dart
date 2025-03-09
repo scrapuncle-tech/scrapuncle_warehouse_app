@@ -9,6 +9,7 @@ import 'package:scrapuncle_warehouse/service/shared_pref.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddItem extends StatefulWidget {
   final String phoneNumber;
@@ -20,13 +21,9 @@ class AddItem extends StatefulWidget {
 }
 
 class _AddItemState extends State<AddItem> {
-  TextEditingController nameController = TextEditingController();
-  TextEditingController weightController = TextEditingController();
-  TextEditingController vehicleNumberController = TextEditingController();
   TextEditingController driverPhoneNumberController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   File? selectedItemImage;
-  File? selectedVehicleImage;
   File? selectedDriverImage;
   String? userId;
   String currentTime = "";
@@ -69,23 +66,17 @@ class _AddItemState extends State<AddItem> {
   }
 
   Future<void> getItemImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(
+        source: ImageSource.camera); // Changed to Camera
     if (image != null) {
       selectedItemImage = File(image.path);
       setState(() {});
     }
   }
 
-  Future<void> getVehicleImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      selectedVehicleImage = File(image.path);
-      setState(() {});
-    }
-  }
-
   Future<void> getDriverImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(
+        source: ImageSource.camera); // Changed to Camera
     if (image != null) {
       selectedDriverImage = File(image.path);
       setState(() {});
@@ -94,70 +85,55 @@ class _AddItemState extends State<AddItem> {
 
   @override
   void dispose() {
-    nameController.dispose();
-    weightController.dispose();
-    vehicleNumberController.dispose();
     driverPhoneNumberController.dispose();
     super.dispose();
   }
 
   Future<void> uploadItem() async {
     if (selectedItemImage != null &&
-        nameController.text.isNotEmpty &&
-        weightController.text.isNotEmpty &&
-        vehicleNumberController.text.isNotEmpty &&
         driverPhoneNumberController.text.isNotEmpty &&
         userId != null) {
       String addId = randomAlphaNumeric(10);
 
       String itemFileName = '$userId/$addId/itemImage';
-      String vehicleFileName = '$userId/$addId/vehicleImage';
       String driverFileName = '$userId/$addId/driverImage';
 
       Reference itemFirebaseStorageRef = FirebaseStorage.instance
           .ref()
           .child("itemImages")
           .child(itemFileName);
-      Reference vehicleFirebaseStorageRef = FirebaseStorage.instance
-          .ref()
-          .child("vehicleImages")
-          .child(vehicleFileName);
       Reference driverFirebaseStorageRef = FirebaseStorage.instance
           .ref()
           .child("driverImages")
           .child(driverFileName);
 
       String itemDownloadUrl = "";
-      String vehicleDownloadUrl = "";
       String driverDownloadUrl = "";
 
       try {
         await itemFirebaseStorageRef.putFile(selectedItemImage!);
         itemDownloadUrl = await itemFirebaseStorageRef.getDownloadURL();
 
-        if (selectedVehicleImage != null) {
-          await vehicleFirebaseStorageRef.putFile(selectedVehicleImage!);
-          vehicleDownloadUrl = await vehicleFirebaseStorageRef.getDownloadURL();
-        }
-
         if (selectedDriverImage != null) {
           await driverFirebaseStorageRef.putFile(selectedDriverImage!);
           driverDownloadUrl = await driverFirebaseStorageRef.getDownloadURL();
         }
 
-        Map<String, dynamic> addItem = {
+        Map<String, dynamic> whitems = {
           "ItemImage": itemDownloadUrl,
-          "PhoneNumber": widget.phoneNumber,
-          "Name": nameController.text,
-          "WeightOrQuantity": weightController.text,
-          "VehicleNumber": vehicleNumberController.text,
-          "VehicleImage": vehicleDownloadUrl,
           "DriverPhoneNumber": driverPhoneNumberController.text,
           "DriverImage": driverDownloadUrl,
           "userId": userId,
-          "itemId": addId,
+          "whitemId": addId,
           "DateTime": currentTime,
         };
+
+        // Add whitems to firestore
+
+        await FirebaseFirestore.instance
+            .collection('whitems')
+            .doc(addId)
+            .set(whitems);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -166,7 +142,7 @@ class _AddItemState extends State<AddItem> {
                 "Item has been added Successfully",
                 style: TextStyle(fontSize: 18.0, color: Colors.white),
               )));
-          Navigator.pop(context, addItem);
+          Navigator.pop(context, whitems);
         }
       } catch (e) {
         print("Error uploading item: $e");
@@ -195,31 +171,6 @@ class _AddItemState extends State<AddItem> {
             style: const TextStyle(fontSize: 18.0, color: Colors.white),
           ),
         ));
-      }
-    }
-  }
-
-  Future<void> addDataToRealtimeDatabase(Map<String, dynamic> itemData) async {
-    DatabaseReference ref = FirebaseDatabase.instance.ref();
-    try {
-      await ref
-          .child('items')
-          .child(userId!)
-          .child(itemData['itemId'])
-          .set(itemData);
-      print("Data added to Realtime Database successfully!");
-    } catch (e) {
-      print("Error adding data to Realtime Database: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.red,
-            content: Text(
-              "Failed to upload item to Realtime Database: $e",
-              style: const TextStyle(fontSize: 18.0, color: Colors.white),
-            ),
-          ),
-        );
       }
     }
   }
@@ -293,116 +244,6 @@ class _AddItemState extends State<AddItem> {
                                     borderRadius: BorderRadius.circular(20),
                                     child: Image.file(
                                       selectedItemImage!,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30.0),
-                    const Text(
-                      "Item Name",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 10.0),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      decoration: BoxDecoration(
-                        color: Colors.green[100],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: TextField(
-                        controller: nameController,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: "Enter Item Name",
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30.0),
-                    const Text(
-                      "Item Weight or Quantity",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 10.0),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      decoration: BoxDecoration(
-                        color: Colors.green[100],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: TextField(
-                        controller: weightController,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: "Enter Item Weight or Quantity",
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30.0),
-                    const Text(
-                      "Vehicle Number",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 10.0),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      decoration: BoxDecoration(
-                        color: Colors.green[100],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: TextField(
-                        controller: vehicleNumberController,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: "Enter Vehicle Number",
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30.0),
-                    const Text(
-                      "Upload the Vehicle Picture",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20.0),
-                    GestureDetector(
-                      onTap: () {
-                        getVehicleImage();
-                      },
-                      child: Center(
-                        child: Material(
-                          elevation: 4.0,
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            width: 150,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              border:
-                                  Border.all(color: Colors.green, width: 1.5),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: selectedVehicleImage == null
-                                ? const Icon(
-                                    Icons.camera_alt_outlined,
-                                    color: Colors.green,
-                                  )
-                                : ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Image.file(
-                                      selectedVehicleImage!,
                                       fit: BoxFit.cover,
                                     ),
                                   ),

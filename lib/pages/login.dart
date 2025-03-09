@@ -35,6 +35,10 @@ class _LoginState extends State<Login> {
         await FirebaseAuth.instance
             .signInWithEmailAndPassword(email: email, password: password);
 
+        //Store the supervisor's ID to Shared Preferences
+        await SharedPreferenceHelper()
+            .saveUserId(FirebaseAuth.instance.currentUser!.uid);
+
         if (mounted) {
           Navigator.pushReplacement(
             context,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:scrapuncle_warehouse/service/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:scrapuncle_warehouse/service/shared_pref.dart';
 
 class PickupPage extends StatefulWidget {
   const PickupPage({Key? key}) : super(key: key);
@@ -11,37 +12,39 @@ class PickupPage extends StatefulWidget {
 
 class _PickupPageState extends State<PickupPage> {
   TextEditingController phoneController = TextEditingController();
-  List<Map<String, dynamic>> items = [];
-  List<bool> itemVerificationStatus = [];
-  String? userId;
+  List<Map<String, dynamic>> products = [];
 
   @override
   void initState() {
     super.initState();
   }
 
-  Future<void> fetchItems() async {
-    String phoneNumber = phoneController.text.trim();
-    if (phoneNumber.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a phone number.")),
-      );
-      return;
+  Future<void> getProducts() async {
+    // clear the products before adding new ones
+    setState(() {
+      products = [];
+    });
+    final QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('products').get();
+
+    if (snapshot.docs.isNotEmpty) {
+      List<Map<String, dynamic>> fetchedProducts = [];
+      for (var doc in snapshot.docs) {
+        var productData = doc.data() as Map<String, dynamic>;
+        // Add isCollected field with initial value of false
+        productData['isCollected'] = false; // Initialize isCollected
+        fetchedProducts.add(productData);
+      }
+
+      setState(() {
+        products = fetchedProducts;
+      });
+    } else {
+      // Handle the case where no products are found
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('No products found!'),
+      ));
     }
-
-    List<Map<String, dynamic>> fetchedItems =
-        await DatabaseMethods().getItemsByPhoneNumber(phoneNumber);
-
-    setState(() {
-      items = fetchedItems;
-      itemVerificationStatus = List.filled(items.length, false);
-    });
-  }
-
-  void toggleItemVerification(int index) {
-    setState(() {
-      itemVerificationStatus[index] = !itemVerificationStatus[index];
-    });
   }
 
   Future<void> completePickup() async {
@@ -54,54 +57,37 @@ class _PickupPageState extends State<PickupPage> {
       return;
     }
 
-    if (items.isEmpty) {
+    // Get the current supervisor ID
+    String? supervisorId = await SharedPreferenceHelper().getUserId();
+
+    if (supervisorId == null || supervisorId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No items to complete.")),
+        const SnackBar(
+            content: Text("Supervisor ID not found. Please login again.")),
       );
       return;
     }
 
-    QuerySnapshot userQuery = await FirebaseFirestore.instance
-        .collection('users')
-        .where('PhoneNumber', isEqualTo: phoneNumber)
-        .get();
+    // Create a new document in whpickup
+    CollectionReference whpickupCollection =
+        FirebaseFirestore.instance.collection('whpickup');
 
-    if (userQuery.docs.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("User not found with this phone number")),
-      );
-      return;
-    }
+    //add items selected
+    for (int i = 0; i < products.length; i++) {
+      if (products[i]['isCollected']) {
+        //Add the supervisorId to track down supervisor
 
-    String userId = userQuery.docs.first.id;
+        products[i]['supervisorId'] = supervisorId;
 
-    try {
-      for (int i = 0; i < items.length; i++) {
-        String itemId = items[i]['itemId'];
-        bool isVerified = itemVerificationStatus[i];
-
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .collection("phoneNumbers")
-            .doc(phoneNumber)
-            .collection("items")
-            .doc(itemId)
-            .update({'isVerified': isVerified});
-
-        print("Item $itemId verification status updated to $isVerified"); // Log
+        // Add this product details to the whpickup collection
+        await whpickupCollection.add(products[i]);
       }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Pickup completed successfully!")),
-      );
-      Navigator.pop(context);
-    } catch (e) {
-      print("Error completing pickup: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error completing pickup: $e")),
-      );
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Pickup completed successfully!")),
+    );
+    Navigator.pop(context);
   }
 
   @override
@@ -134,49 +120,39 @@ class _PickupPageState extends State<PickupPage> {
             const SizedBox(height: 20.0),
             ElevatedButton(
               onPressed: () {
-                fetchItems();
+                getProducts();
               },
-              child: const Text("Fetch Items"),
+              child: const Text("Get Products"),
             ),
             const SizedBox(height: 20.0),
             const Text(
-              "Items:",
+              "Products:",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 10.0),
-            if (items.isEmpty)
-              const Text("No items found.")
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
+            Expanded(
+              child: ListView.builder(
+                itemCount: products.length,
                 itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () {
-                      toggleItemVerification(index);
+                  return CheckboxListTile(
+                    title: Text(products[index]['name'] ?? 'Product Name'),
+                    value: products[index]['isCollected'] ?? false,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        products[index]['isCollected'] = value ?? false;
+                      });
                     },
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 5.0),
-                      padding: const EdgeInsets.all(10.0),
-                      decoration: BoxDecoration(
-                        color: itemVerificationStatus[index]
-                            ? Colors.green.shade200
-                            : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(5.0),
-                      ),
-                      child: Text(items[index]['Name'] ?? 'Item Name'),
-                    ),
                   );
                 },
               ),
+            ),
             const SizedBox(height: 20.0),
             ElevatedButton(
               onPressed: () {
-                completePickup();
+                completePickup(); // Call a new function to complete pickup
               },
               child: const Text("Complete Pickup"),
             ),

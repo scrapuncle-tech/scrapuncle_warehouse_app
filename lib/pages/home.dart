@@ -12,16 +12,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String? supervisorName;
+  String? supervisorId; // Changed to supervisorId
 
   @override
   void initState() {
     super.initState();
-    getSupervisorName();
+    getSupervisorId();
   }
 
-  Future<void> getSupervisorName() async {
-    supervisorName = await SharedPreferenceHelper().getUserName();
+  Future<void> getSupervisorId() async {
+    supervisorId =
+        await SharedPreferenceHelper().getUserId(); // Corrected: Get UserId
     setState(() {});
   }
 
@@ -46,7 +47,7 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Welcome, ${supervisorName ?? 'Supervisor'}!",
+              "SupervisorID: ${supervisorId ?? 'Supervisor'}!", // Corrected display
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -63,8 +64,8 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 10),
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
-                  .collectionGroup('items')
-                  .where('isVerified', isEqualTo: true)
+                  .collection('whpickup')
+                  .where('supervisorId', isEqualTo: supervisorId)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -104,34 +105,14 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Item Name: ${itemData['Name'] ?? 'N/A'}",
+                                "Item Name: ${itemData['name'] ?? 'N/A'}",
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                  "Weight/Quantity: ${itemData['WeightOrQuantity'] ?? 'N/A'}"),
+                                  "Price: ${itemData['price'] ?? 'N/A'}"), // changed to the products' prices
                               Text(
-                                  "Pickup Agent Phone: ${itemData['PhoneNumber'] ?? 'N/A'}"),
-                              Text(
-                                  "Vehicle Number: ${itemData['VehicleNumber'] ?? 'N/A'}"),
-                              Text(
-                                  "Driver Phone: ${itemData['DriverPhoneNumber'] ?? 'N/A'}"),
-                              if (itemData['VehicleImage'] != null &&
-                                  itemData['VehicleImage'].isNotEmpty)
-                                Image.network(
-                                  itemData['VehicleImage'],
-                                  height: 100,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              if (itemData['DriverImage'] != null &&
-                                  itemData['DriverImage'].isNotEmpty)
-                                Image.network(
-                                  itemData['DriverImage'],
-                                  height: 100,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
+                                  "Unit: ${itemData['unit'] ?? 'N/A'}"), // added the products' unit
                             ],
                           ),
                         ),

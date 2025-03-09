@@ -57,10 +57,14 @@ class _PickupPageState extends State<PickupPage> {
       return;
     }
 
-    // Get the current supervisor ID
-    String? supervisorId = await SharedPreferenceHelper().getUserId();
+    // Get the current supervisor Firebase Auth UID and supervisorId
+    String? supervisorUid = await SharedPreferenceHelper().getUserId();
+    String? supervisorId = await SharedPreferenceHelper().getSupervisorId();
 
-    if (supervisorId == null || supervisorId.isEmpty) {
+    if (supervisorUid == null ||
+        supervisorUid.isEmpty ||
+        supervisorId == null ||
+        supervisorId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text("Supervisor ID not found. Please login again.")),
@@ -152,7 +156,7 @@ class _PickupPageState extends State<PickupPage> {
             const SizedBox(height: 20.0),
             ElevatedButton(
               onPressed: () {
-                completePickup(); // Call a new function to complete pickup
+                completePickup();
               },
               child: const Text("Complete Pickup"),
             ),

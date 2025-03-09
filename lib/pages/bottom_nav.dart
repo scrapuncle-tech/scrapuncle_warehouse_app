@@ -17,7 +17,7 @@ class _BottomNavState extends State<BottomNav> {
   static List<Widget> _widgetOptions = <Widget>[
     const HomePage(), // Home Page
     const PickupPage(), // Pickup Page
-    const Profile(), // Profile Page
+    // const Profile(), // Profile Page
   ];
 
   void _onItemTapped(int index) {
@@ -44,11 +44,10 @@ class _BottomNavState extends State<BottomNav> {
             label: 'Pickup',
             backgroundColor: Colors.green,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-            backgroundColor: Colors.green,
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.person),
+          //   label: 'Profile',
+          //   backgroundColor: Colors.green,
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.white,

@@ -6,6 +6,7 @@ class SharedPreferenceHelper {
   static String userPhoneNumberKey = 'USERPHONENUMBERKEY';
   static String userEmailKey = 'USEREMAILKEY';
   static String userProfileKey = 'USERPROFILEKEY';
+  static String supervisorIdKey = 'SUPERVISORIDKEY'; // Add this line
 
   Future<bool> saveUserId(String getUserId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -32,6 +33,12 @@ class SharedPreferenceHelper {
     return prefs.setString(userProfileKey, getUserProfile);
   }
 
+  // New method to save the supervisorId
+  Future<bool> saveSupervisorId(String getSupervisorId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.setString(supervisorIdKey, getSupervisorId);
+  }
+
   Future<String?> getUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString(userIdKey);
@@ -55,5 +62,11 @@ class SharedPreferenceHelper {
   Future<String?> getUserProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString(userProfileKey);
+  }
+
+  // New method to get the supervisorId
+  Future<String?> getSupervisorId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString(supervisorIdKey);
   }
 }

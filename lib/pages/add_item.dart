@@ -22,10 +22,12 @@ class AddItem extends StatefulWidget {
 
 class _AddItemState extends State<AddItem> {
   TextEditingController driverPhoneNumberController = TextEditingController();
-  final ImagePicker _picker = ImagePicker();
   TextEditingController itemNameController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
   File? selectedItemImage;
   File? selectedDriverImage;
+  File? selectedVehicleImage;
+
   String? userId;
   String currentTime = "";
   bool _isLoading = false;
@@ -84,20 +86,32 @@ class _AddItemState extends State<AddItem> {
     }
   }
 
+  Future<void> getVehicleImage() async {
+    final XFile? image = await _picker.pickImage(
+        source: ImageSource.camera); // Changed to Camera
+    if (image != null) {
+      selectedVehicleImage = File(image.path);
+      setState(() {});
+    }
+  }
+
   @override
   void dispose() {
     driverPhoneNumberController.dispose();
+    itemNameController.dispose();
     super.dispose();
   }
 
   Future<void> uploadItem() async {
     if (selectedItemImage != null &&
         driverPhoneNumberController.text.isNotEmpty &&
+        itemNameController.text.isNotEmpty &&
         userId != null) {
       String addId = randomAlphaNumeric(10);
 
       String itemFileName = '$userId/$addId/itemImage';
       String driverFileName = '$userId/$addId/driverImage';
+      String vehicleFileName = '$userId/$addId/vehicleImage';
 
       Reference itemFirebaseStorageRef = FirebaseStorage.instance
           .ref()
@@ -107,9 +121,14 @@ class _AddItemState extends State<AddItem> {
           .ref()
           .child("driverImages")
           .child(driverFileName);
+      Reference vehicleFirebaseStorageRef = FirebaseStorage.instance
+          .ref()
+          .child("vehicleImages")
+          .child(vehicleFileName);
 
       String itemDownloadUrl = "";
       String driverDownloadUrl = "";
+      String vehicleDownloadUrl = "";
 
       try {
         await itemFirebaseStorageRef.putFile(selectedItemImage!);
@@ -119,15 +138,21 @@ class _AddItemState extends State<AddItem> {
           await driverFirebaseStorageRef.putFile(selectedDriverImage!);
           driverDownloadUrl = await driverFirebaseStorageRef.getDownloadURL();
         }
+        if (selectedVehicleImage != null) {
+          await vehicleFirebaseStorageRef.putFile(selectedVehicleImage!);
+          vehicleDownloadUrl = await vehicleFirebaseStorageRef.getDownloadURL();
+        }
 
         Map<String, dynamic> whitems = {
           "ItemImage": itemDownloadUrl,
           "ItemName": itemNameController.text,
           "DriverPhoneNumber": driverPhoneNumberController.text,
           "DriverImage": driverDownloadUrl,
+          "VehicleImage": vehicleDownloadUrl,
           "userId": userId,
           "whitemId": addId,
           "DateTime": currentTime,
+          "test": "Testing to make sure it pushed in Firebase"
         };
 
         // Add whitems to firestore
@@ -136,6 +161,7 @@ class _AddItemState extends State<AddItem> {
             .collection('whitems')
             .doc(addId)
             .set(whitems);
+        print("Item data added successfully to Firestore");
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -212,6 +238,30 @@ class _AddItemState extends State<AddItem> {
                         style: const TextStyle(fontSize: 16),
                       ),
                     ),
+                    const SizedBox(height: 20.0),
+                    const Text(
+                      "Item Name",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10.0),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      decoration: BoxDecoration(
+                        color: Colors.green[100],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: TextField(
+                        controller: itemNameController,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: "Enter ItemName",
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10.0),
                     const SizedBox(height: 30.0),
                     const Text(
                       "Upload the Item Picture",
@@ -254,17 +304,43 @@ class _AddItemState extends State<AddItem> {
                       ),
                     ),
                     const SizedBox(height: 30.0),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      decoration: BoxDecoration(
-                        color: Colors.green[100],
-                        borderRadius: BorderRadius.circular(10),
+                    const Text(
+                      "Upload the Vehicle Picture",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                      child: TextField(
-                        controller: itemNameController,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: "Enter Item Name",
+                    ),
+                    const SizedBox(height: 20.0),
+                    GestureDetector(
+                      onTap: () {
+                        getVehicleImage();
+                      },
+                      child: Center(
+                        child: Material(
+                          elevation: 4.0,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 150,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              border:
+                                  Border.all(color: Colors.green, width: 1.5),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: selectedVehicleImage == null
+                                ? const Icon(
+                                    Icons.camera_alt_outlined,
+                                    color: Colors.green,
+                                  )
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Image.file(
+                                      selectedVehicleImage!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                          ),
                         ),
                       ),
                     ),

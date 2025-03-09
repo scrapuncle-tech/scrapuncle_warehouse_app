@@ -58,17 +58,19 @@ class _PickupPageState extends State<PickupPage> {
       return;
     }
 
-    // Get the current supervisor Firebase Auth UID and supervisorId
+    // Get the current supervisor Firebase Auth UID and supervisorPhone
     String? supervisorUid = await SharedPreferenceHelper().getUserId();
-    String? supervisorId = await SharedPreferenceHelper().getSupervisorId();
+    String? supervisorPhone =
+        await SharedPreferenceHelper().getUserPhoneNumber();
 
     if (supervisorUid == null ||
         supervisorUid.isEmpty ||
-        supervisorId == null ||
-        supervisorId.isEmpty) {
+        supervisorPhone == null ||
+        supervisorPhone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("Supervisor ID not found. Please login again.")),
+            content:
+                Text("Supervisor Phone Number not found. Please login again.")),
       );
       return;
     }
@@ -80,9 +82,9 @@ class _PickupPageState extends State<PickupPage> {
     //add items selected
     for (int i = 0; i < products.length; i++) {
       if (products[i]['isCollected']) {
-        //Add the supervisorId to track down supervisor
+        //Add the supervisorPhone to track down supervisor
 
-        products[i]['supervisorId'] = supervisorId;
+        products[i]['supervisorPhoneNumber'] = supervisorPhone;
 
         // Add this product details to the whpickup collection
         await whpickupCollection.add(products[i]);
@@ -99,9 +101,20 @@ class _PickupPageState extends State<PickupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Process Pickup"),
-        backgroundColor: Colors.green,
-      ),
+          title: const Text("Process Pickup"),
+          backgroundColor: Colors.green,
+          actions:
+              //Add the superivosrPhone to show in the UI
+
+              [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "The phone number: ${phoneController.text}",
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ]),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(

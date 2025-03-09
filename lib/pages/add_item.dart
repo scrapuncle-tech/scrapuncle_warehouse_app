@@ -18,6 +18,7 @@ class _AddItemState extends State<AddItem> {
   String currentTime = "";
   bool _isLoading = false;
   List<Map<String, dynamic>> products = [];
+  String? supervisorPhoneNumber;
 
   @override
   void initState() {
@@ -42,6 +43,9 @@ class _AddItemState extends State<AddItem> {
     setState(() {
       _isLoading = true;
     });
+    supervisorPhoneNumber = await SharedPreferenceHelper()
+        .getUserPhoneNumber(); // Get supervisor's phone number
+
     await getProducts();
     setState(() {
       _isLoading = false;
@@ -93,11 +97,25 @@ class _AddItemState extends State<AddItem> {
     });
 
     try {
+      if (supervisorPhoneNumber == null || supervisorPhoneNumber!.isEmpty) {
+        //null check
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            backgroundColor: Colors.red,
+            content: Text("Supervisor Phone Number not found."),
+          ));
+        }
+
+        return;
+      }
       // Store the collected products
       for (var item in collectedProducts) {
         String whitemId = randomAlphaNumeric(10);
         item['whitemId'] = whitemId;
-        item['phoneNumber'] = widget.phoneNumber; //add PhoneNumber
+        item['phoneNumber'] = widget.phoneNumber;
+        item['DateTime'] = currentTime; //now add the date and time
+        item['supervisorPhoneNumber'] =
+            supervisorPhoneNumber; // Add supervisor's phone number
         await FirebaseFirestore.instance
             .collection('whitems')
             .doc(whitemId)

@@ -5,6 +5,8 @@ import 'package:scrapuncle_warehouse/service/shared_pref.dart';
 import 'package:scrapuncle_warehouse/pages/add_item.dart';
 import 'package:intl/intl.dart';
 import 'dart:io'; // Import dart:io for File
+import 'package:scrapuncle_warehouse/pages/home.dart'; // Import HomePage
+import 'package:firebase_storage/firebase_storage.dart'; // Import Firebase Storage
 
 import 'package:image_picker/image_picker.dart';
 
@@ -18,7 +20,8 @@ class PickupPage extends StatefulWidget {
 class _PickupPageState extends State<PickupPage> {
   TextEditingController phoneController = TextEditingController();
   TextEditingController itemNameController = TextEditingController();
-  List<Map<String, dynamic>> products = [];
+  List<Map<String, dynamic>> products =
+      []; //Still kept the products here just in case to use it in the future
   String currentTime = "";
   List<File> itemImages = [];
   File? selectedVehicleImage;
@@ -62,34 +65,6 @@ class _PickupPageState extends State<PickupPage> {
     });
   }
 
-  Future<void> getProducts() async {
-    // clear the products before adding new ones
-    setState(() {
-      products = [];
-    });
-    final QuerySnapshot snapshot =
-        await FirebaseFirestore.instance.collection('products').get();
-
-    if (snapshot.docs.isNotEmpty) {
-      List<Map<String, dynamic>> fetchedProducts = [];
-      for (var doc in snapshot.docs) {
-        var productData = doc.data() as Map<String, dynamic>;
-        // Add isCollected field with initial value of false
-        productData['isCollected'] = false; // Initialize isCollected
-        fetchedProducts.add(productData);
-      }
-
-      setState(() {
-        products = fetchedProducts;
-      });
-    } else {
-      // Handle the case where no products are found
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('No products found!'),
-      ));
-    }
-  }
-
   Future<void> completePickup() async {
     String phoneNumber = phoneController.text.trim();
 
@@ -121,25 +96,68 @@ class _PickupPageState extends State<PickupPage> {
     CollectionReference whpickupCollection =
         FirebaseFirestore.instance.collection('whpickup');
 
-    //add items selected
-    for (int i = 0; i < products.length; i++) {
-      if (products[i]['isCollected']) {
-        //Add the supervisorPhone to track down supervisor
+    // Prepare the data to be stored in whpickup.  This is where we combine all info.
 
-        products[i]['supervisorPhoneNumber'] = supervisorPhone;
+    Map<String, dynamic> pickupData = {
+      'supervisorPhoneNumber': supervisorPhone, //From SharedPref
+      'agentPhoneNumber': phoneNumber, // From the text field
+      'dateTime': currentTime, // Current time.
+      'itemName': itemNameController.text, // Item name.
+      'itemImages': [], // Placeholder, updated below
+      'vehicleImage': "", // Placeholder, updated below
+      'driverImage': "", //Placeholder, updated below
+    };
 
-        // Add the currentTime
-        products[i]['DateTime'] = currentTime;
-
-        // Add this product details to the whpickup collection
-        await whpickupCollection.add(products[i]);
-      }
+    //Upload Images to cloud and get the URL
+    List<String> itemImageUrls = [];
+    for (File imageFile in itemImages) {
+      String fileName =
+          'itemImages/$supervisorUid/${DateTime.now().millisecondsSinceEpoch}_${itemImages.indexOf(imageFile)}.jpg'; //Unique name
+      Reference ref = FirebaseStorage.instance.ref().child(fileName);
+      await ref.putFile(imageFile);
+      String downloadURL = await ref.getDownloadURL();
+      itemImageUrls.add(downloadURL); //Collect all the links
     }
+    pickupData['itemImages'] = itemImageUrls;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Pickup completed successfully!")),
-    );
-    Navigator.pop(context);
+    // Upload vehicle image and get URL, upload only if the image exists
+    String vehicleImageUrl = ""; //Default is ""
+    if (selectedVehicleImage != null) {
+      String vehicleFileName =
+          'vehicleImages/$supervisorUid/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      Reference vehicleRef =
+          FirebaseStorage.instance.ref().child(vehicleFileName);
+      await vehicleRef.putFile(selectedVehicleImage!);
+      vehicleImageUrl = await vehicleRef.getDownloadURL();
+    }
+    pickupData['vehicleImage'] = vehicleImageUrl; // Store the URL
+
+    // Upload driver image and get URL, upload only if the image exists
+    String driverImageUrl = "";
+    if (selectedDriverImage != null) {
+      String driverFileName =
+          'driverImages/$supervisorUid/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      Reference driverRef =
+          FirebaseStorage.instance.ref().child(driverFileName);
+      await driverRef.putFile(selectedDriverImage!);
+      driverImageUrl = await driverRef.getDownloadURL();
+    }
+    pickupData['driverImage'] = driverImageUrl; // Store the URL.
+
+    // Add the pickup data to the whpickup collection
+
+    try {
+      await whpickupCollection.add(pickupData);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Pickup completed successfully!")),
+      );
+      //Go back to home page
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => HomePage()));
+    } catch (e) {
+      print("Error is here: $e");
+    }
   }
 
   Future<void> _pickImage() async {
@@ -232,13 +250,7 @@ class _PickupPageState extends State<PickupPage> {
               ),
             ),
             const SizedBox(height: 10.0),
-            ElevatedButton(
-              onPressed: () {
-                getProducts();
-              },
-              child: const Text("Update phone Number"),
-            ),
-            const SizedBox(height: 20.0), // Spacing
+            // const SizedBox(height: 20.0), // Spacing Removed the get products button
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -335,31 +347,6 @@ class _PickupPageState extends State<PickupPage> {
               ],
             ),
 
-            // const SizedBox(height: 20.0),
-            // const Text(
-            //   "Products:",
-            //   style: TextStyle(
-            //     fontSize: 18,
-            //     fontWeight: FontWeight.bold,
-            //   ),
-            // ),
-            // const SizedBox(height: 10.0),
-            // ListView.builder(
-            //   shrinkWrap: true, // add this
-            //   physics: const NeverScrollableScrollPhysics(), // add this
-            //   itemCount: products.length,
-            //   itemBuilder: (context, index) {
-            //     return CheckboxListTile(
-            //       title: Text(products[index]['name'] ?? 'Product Name'),
-            //       value: products[index]['isCollected'] ?? false,
-            //       onChanged: (bool? value) {
-            //         setState(() {
-            //           products[index]['isCollected'] = value ?? false;
-            //         });
-            //       },
-            //     );
-            //   },
-            // ),
             const SizedBox(height: 20.0),
             ElevatedButton(
               onPressed: () {

@@ -1,9 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:scrapuncle_warehouse/pages/bottom_nav.dart';
-import 'package:scrapuncle_warehouse/pages/home.dart'; // Navigate to Warehouse Home
+import 'package:scrapuncle_warehouse/pages/home.dart';
+import 'package:scrapuncle_warehouse/service/database.dart'; // Import DatabaseMethods
 import 'package:scrapuncle_warehouse/pages/signup.dart';
 import 'package:scrapuncle_warehouse/service/shared_pref.dart'; // Import SharedPreferenceHelper
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -32,12 +33,46 @@ class _LoginState extends State<Login> {
         _isLoading = true;
       });
       try {
+        //First sign in
         await FirebaseAuth.instance
             .signInWithEmailAndPassword(email: email, password: password);
 
-        //Store the supervisor's ID to Shared Preferences
-        await SharedPreferenceHelper()
-            .saveUserId(FirebaseAuth.instance.currentUser!.uid);
+        //Get the UID after successful signin
+        String uid = FirebaseAuth.instance.currentUser!.uid;
+
+        // After successful authentication, fetch the supervisor document from Firestore
+        //Query the database by where the email is the same
+        final QuerySnapshot snapshot = await FirebaseFirestore.instance
+            .collection('supervisors')
+            .where('Email', isEqualTo: email)
+            .get();
+        // .doc(FirebaseAuth.instance.currentUser!.uid)
+        // .get();
+
+        if (snapshot.docs.isNotEmpty) {
+          //Get the doc
+          DocumentSnapshot supervisorDoc = snapshot.docs.first;
+          print(supervisorDoc['PhoneNumber']);
+          print(supervisorDoc['id']);
+
+          //Store both UID and the supervisorId to Shared Preferences
+          await SharedPreferenceHelper().saveUserId(uid); //Corrected Line
+
+          await SharedPreferenceHelper()
+              .saveSupervisorId(supervisorDoc['id']); //Corrected line
+          await SharedPreferenceHelper()
+              .saveUserPhoneNumber(supervisorDoc['PhoneNumber']); //Correct line
+        } else {
+          print("Supervisor document not found!");
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              backgroundColor: Colors.red,
+              content: Text(
+                  "Supervisor document not found. Please contact the admin."),
+            ));
+          }
+          return;
+        }
 
         if (mounted) {
           Navigator.pushReplacement(

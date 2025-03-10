@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // Add this import
+import 'package:firebase_storage/firebase_storage.dart';
 
 class PickupPage extends StatefulWidget {
   const PickupPage({Key? key}) : super(key: key);
@@ -34,29 +34,20 @@ class _PickupPageState extends State<PickupPage> {
   @override
   void initState() {
     super.initState();
-    currentTime = DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now());
-
-    // Update the time every minute
-    Future.delayed(Duration.zero, () async {
-      while (mounted) {
-        await Future.delayed(const Duration(minutes: 1));
-        if (mounted) {
-          setState(() {
-            currentTime =
-                DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now());
-          });
-        }
-      }
-    });
+    _updateCurrentTime(); // Initial time setting.
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-    if (pickedFile != null) {
-      setState(() {
-        itemImages.add(File(pickedFile.path));
-      });
-    }
+  void _updateCurrentTime() {
+    setState(() {
+      currentTime = DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now());
+    });
+    // Update every minute.  We do this here, not in build, to avoid
+    // unnecessary rebuilds.
+    Future.delayed(const Duration(minutes: 1), () {
+      if (mounted) {
+        _updateCurrentTime();
+      }
+    });
   }
 
   Future<void> getVehicleImage() async {
@@ -77,39 +68,20 @@ class _PickupPageState extends State<PickupPage> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        itemImages.add(File(pickedFile.path));
+      });
+    }
+  }
+
   // Remove image at an index
   void _removeImage(int index) {
     setState(() {
       itemImages.removeAt(index);
     });
-  }
-
-  Future<void> getProducts() async {
-    // clear the products before adding new ones
-    setState(() {
-      products = [];
-    });
-    final QuerySnapshot snapshot =
-        await FirebaseFirestore.instance.collection('products').get();
-
-    if (snapshot.docs.isNotEmpty) {
-      List<Map<String, dynamic>> fetchedProducts = [];
-      for (var doc in snapshot.docs) {
-        var productData = doc.data() as Map<String, dynamic>;
-        // Add isCollected field with initial value of false
-        productData['isCollected'] = false; // Initialize isCollected
-        fetchedProducts.add(productData);
-      }
-
-      setState(() {
-        products = fetchedProducts;
-      });
-    } else {
-      // Handle the case where no products are found
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('No products found!'),
-      ));
-    }
   }
 
   Future<void> _completePickup() async {
@@ -148,8 +120,11 @@ class _PickupPageState extends State<PickupPage> {
       _showError("Supervisor phone number not found.  Please log in again.");
       return;
     }
+    // Get today's date in 'yyyy-MM-dd' format
+    String todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
     try {
-      // 1. Upload Images and Get URLs
+      // 1. Upload Images and Get URLs (if they exist)
       List<String> itemImageUrls = [];
       for (File imageFile in itemImages) {
         String fileName =
@@ -170,7 +145,6 @@ class _PickupPageState extends State<PickupPage> {
         vehicleImageUrl = await vehicleRef.getDownloadURL();
       }
 
-      // Upload driver image and get URL, upload only if the image exists
       String driverImageUrl = "";
       if (selectedDriverImage != null) {
         String driverFileName =
@@ -180,17 +154,18 @@ class _PickupPageState extends State<PickupPage> {
         await driverRef.putFile(selectedDriverImage!);
         driverImageUrl = await driverRef.getDownloadURL();
       }
+
       // 2. Prepare Data for Firestore
       Map<String, dynamic> pickupData = {
-        'supervisorPhoneNumber': supervisorPhone,
-        'agentPhoneNumber': phoneNumber,
-        'dateTime': currentTime,
-        'itemName': itemName,
-        'itemImages': itemImageUrls,
-        'vehicleImage': vehicleImageUrl,
-        'driverImage': driverImageUrl,
-        'driverPhoneNumber': driverPhoneNumber, // NEW
-        'vehicleNumber': vehicleNumber, // NEW
+        'supervisorPhoneNumber': supervisorPhone, //From SharedPref
+        'agentPhoneNumber': phoneNumber, // From the text field
+        'DateTime': currentTime, // Use the captured currentTime
+        'itemName': itemName, // From the text field.
+        'itemImages': itemImageUrls, // List of image URLs
+        'vehicleImage': vehicleImageUrl, // URL, possibly empty
+        'driverImage': driverImageUrl, // URL, possibly empty
+        'driverPhoneNumber': driverPhoneNumberController.text,
+        'vehicleNumber': vehicleNumberController.text,
       };
 
       // 3. Write to Firestore
@@ -214,6 +189,7 @@ class _PickupPageState extends State<PickupPage> {
 
   void _showError(String message) {
     if (mounted) {
+      // Important: Check if the widget is still mounted
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -235,29 +211,64 @@ class _PickupPageState extends State<PickupPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Realtime Time/Date: $currentTime",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: itemNameController,
-              decoration: const InputDecoration(
-                labelText: "Item Name",
-                border: OutlineInputBorder(),
+            const Text(
+              "Realtime Time/Date",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10.0),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              decoration: BoxDecoration(
+                color: Colors.green[100],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                currentTime,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+            const Text(
+              "Enter Item Name",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10.0),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              decoration: BoxDecoration(
+                color: Colors.green[100],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: TextField(
+                controller: itemNameController,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: "Enter Item Name",
+                ),
+              ),
+            ),
+            const Text(
+              "Enter Pickup Agent's Phone Number",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10.0),
             TextField(
               controller: phoneController,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(
-                labelText: "Pickup Agent's Phone Number",
+                hintText: "Enter phone number",
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.phone),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10.0),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -268,172 +279,118 @@ class _PickupPageState extends State<PickupPage> {
                   ),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                textStyle: const TextStyle(fontSize: 16),
-              ),
-              child: const Text("Add Details",
-                  style: TextStyle(color: Colors.white)),
+              child: const Text("Add Details"),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              "Item Images",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton.icon(
-              onPressed: _pickImage,
-              icon: const Icon(
-                Icons.camera_alt,
-                color: Colors.white,
-              ),
-              label: const Text("Take Photo",
-                  style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                textStyle: const TextStyle(fontSize: 14),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              height: 100,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: itemImages.length,
-                itemBuilder: (context, index) {
-                  return Stack(
-                    children: [
-                      Padding(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10.0),
+                const Text(
+                  "Click Photos of Items From Camera",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    _pickImage();
+                  },
+                  child: const Text("Take items photos"),
+                ),
+                Container(
+                  height: 100,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: itemImages.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Image.file(itemImages[index],
-                            width: 100, height: 100, fit: BoxFit.cover),
-                      ),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: () => _removeImage(index),
-                          child: Container(
-                            color: Colors.red,
-                            child: const Icon(Icons.close, color: Colors.white),
-                          ),
+                        child: Image.file(
+                          itemImages[index],
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
                         ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              "Driver Phone Number", // Added driver phone number heading
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              // Added text field for driver phone number
-              controller: driverPhoneNumberController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: "Driver Phone Number",
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.phone),
-              ),
-            ),
-            const SizedBox(height: 10.0),
-            const Text(
-              "Driver Image",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton.icon(
-              onPressed: getDriverImage,
-              icon: const Icon(
-                Icons.camera_alt,
-                color: Colors.white,
-              ),
-              label: const Text("Take Photo",
-                  style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                textStyle: const TextStyle(fontSize: 14),
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (selectedDriverImage != null)
-              Image.file(
-                selectedDriverImage!,
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-              ),
-            const SizedBox(height: 24),
-            const Text(
-              "Vehicle Number", // Added vehicle number heading
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              //Added text field for vehicle number
-              controller: vehicleNumberController,
-              decoration: const InputDecoration(
-                labelText: "Vehicle Number",
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.local_shipping), //Using a truck icon
-              ),
-            ),
-            const Text(
-              "Vehicle Image",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton.icon(
-              onPressed: getVehicleImage,
-              icon: const Icon(
-                Icons.camera_alt,
-                color: Colors.white,
-              ),
-              label: const Text("Take Photo",
-                  style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                textStyle: const TextStyle(fontSize: 14),
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (selectedVehicleImage != null)
-              Image.file(
-                selectedVehicleImage!,
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-              ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  _completePickup();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+                      );
+                    },
+                  ),
                 ),
-                child: const Text(
-                  "Complete Pickup",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+                const SizedBox(height: 10.0),
+                const Text(
+                  "Click Photo of Driver From Camera",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 8.0),
+                TextField(
+                  // Added text field for driver phone number
+                  controller: driverPhoneNumberController,
+                  decoration: const InputDecoration(
+                    labelText: "Driver Number",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.phone),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    getDriverImage();
+                  },
+                  child: const Text("Take driver photos"),
+                ),
+                if (selectedDriverImage != null)
+                  Image.file(
+                    selectedDriverImage!,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  )
+                else
+                  Container(),
+                const SizedBox(height: 10.0),
+                const Text(
+                  "Click Photo of Vehicle From Camera",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextField(
+                  //Added text field for vehicle number
+                  controller: vehicleNumberController,
+                  decoration: const InputDecoration(
+                    labelText: "Vehicle Number",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.local_shipping), //Using a truck icon
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    getVehicleImage();
+                  },
+                  child: const Text("Take vehicle photos"),
+                ),
+                if (selectedVehicleImage != null)
+                  Image.file(
+                    selectedVehicleImage!,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  )
+                else
+                  Container(),
+              ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20.0),
+            const SizedBox(height: 20.0),
+            ElevatedButton(
+              onPressed: () {
+                _completePickup();
+              },
+              child: const Text("Complete Pickup"),
+            ),
           ],
         ),
       ),

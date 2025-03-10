@@ -4,6 +4,7 @@ import 'package:scrapuncle_warehouse/service/shared_pref.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:scrapuncle_warehouse/pages/details.dart';
 import 'package:intl/intl.dart';
+import 'package:scrapuncle_warehouse/pages/pickup.dart'; // Import PickupPage
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -23,19 +24,43 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> getSupervisorDetails() async {
-    supervisorUid = await SharedPreferenceHelper().getUserId();
-    supervisorPhone = await SharedPreferenceHelper()
-        .getUserPhoneNumber(); // Get the phone number
+    supervisorUid = await SharedPreferenceHelper().getUserId(); // Get UID
 
-    setState(() {});
+    if (supervisorUid != null) {
+      // Fetch supervisor document from Firestore using UID
+      DocumentSnapshot supervisorSnapshot = await FirebaseFirestore.instance
+          .collection('supervisors')
+          .doc(supervisorUid) // Use UID as document ID
+          .get();
+
+      if (supervisorSnapshot.exists) {
+        // Extract phone number from the document
+        setState(() {
+          supervisorPhone = supervisorSnapshot['PhoneNumber'];
+        });
+      } else {
+        print("Supervisor document not found!"); //Debug
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    "Supervisor document not found! Log Out and try again")),
+          );
+        }
+      }
+    } else {
+      print("Supervisor Uid not found!"); //Debug
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Supervisor ID is not found. Please re-login.")),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get today's date in the same format as stored in Firestore
-    String todayDate =
-        DateFormat('yyyy-MM-dd').format(DateTime.now()); // Correct Date Format
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Warehouse - Home"),
@@ -55,7 +80,7 @@ class _HomePageState extends State<HomePage> {
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Text(
-              "Supervisor: ${supervisorPhone ?? 'Supervisor'}!", // Display phone
+              "Supervisor: ${supervisorPhone ?? 'Supervisor'}!",
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -77,9 +102,6 @@ class _HomePageState extends State<HomePage> {
             stream: FirebaseFirestore.instance
                 .collection('whpickup')
                 .where('supervisorPhoneNumber', isEqualTo: supervisorPhone)
-                .where('DateTime',
-                    isGreaterThanOrEqualTo:
-                        todayDate) // Corrected field name and comparison
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
@@ -129,7 +151,7 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Item Name: ${itemData['itemName'] ?? 'N/A'}", // Correct field name
+                                "Item Name: ${itemData['itemName'] ?? 'N/A'}",
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold),
                               ),
@@ -146,6 +168,17 @@ class _HomePageState extends State<HomePage> {
             },
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        // Add this FAB
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PickupPage()),
+          );
+        },
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.add),
       ),
     );
   }

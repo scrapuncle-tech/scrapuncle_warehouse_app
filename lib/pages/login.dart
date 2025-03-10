@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:scrapuncle_warehouse/pages/home.dart';
+import 'package:scrapuncle_warehouse/pages/bottom_nav.dart';
 import 'package:scrapuncle_warehouse/service/database.dart'; // Import DatabaseMethods
 import 'package:scrapuncle_warehouse/pages/signup.dart';
 import 'package:scrapuncle_warehouse/service/shared_pref.dart'; // Import SharedPreferenceHelper
@@ -33,35 +33,43 @@ class _LoginState extends State<Login> {
         _isLoading = true;
       });
       try {
-        //First sign in
+        // 1. Authenticate with Firebase Auth
         await FirebaseAuth.instance
             .signInWithEmailAndPassword(email: email, password: password);
 
-        //Get the UID after successful signin
+        // 2. Get the Firebase Auth UID.
         String uid = FirebaseAuth.instance.currentUser!.uid;
 
-        // After successful authentication, fetch the supervisor document from Firestore
-        //Query the database by where the email is the same
-        final QuerySnapshot snapshot = await FirebaseFirestore.instance
+        // 3. Query Firestore to find the supervisor document with the matching email.
+        QuerySnapshot querySnapshot = await FirebaseFirestore.instance
             .collection('supervisors')
-            .where('Email', isEqualTo: email)
+            .where('Email',
+                isEqualTo: email) // Match on EMAIL, as provided in signup
             .get();
-        // .doc(FirebaseAuth.instance.currentUser!.uid)
-        // .get();
 
-        if (snapshot.docs.isNotEmpty) {
-          //Get the doc
-          DocumentSnapshot supervisorDoc = snapshot.docs.first;
-          print(supervisorDoc['PhoneNumber']);
-          print(supervisorDoc['id']);
+        // 4. Check if a document was found.
+        if (querySnapshot.docs.isNotEmpty) {
+          // 5. Get the first document (there should only be one).
+          DocumentSnapshot supervisorDoc = querySnapshot.docs.first;
 
-          //Store both UID and the supervisorId to Shared Preferences
-          await SharedPreferenceHelper().saveUserId(uid); //Corrected Line
+          // 6. Extract the supervisorId and PhoneNumber from the document.
+          String supervisorId = supervisorDoc.id; // Get DOCUMENT ID
+          String supervisorPhone = supervisorDoc['PhoneNumber'];
 
+          // 7. Save both the UID and supervisorId to Shared Preferences.
+          await SharedPreferenceHelper().saveUserId(
+              uid); // Save Firebase Auth UID for authentication purposes.
+          await SharedPreferenceHelper().saveSupervisorId(
+              supervisorId); // Save the Firestore document ID.
           await SharedPreferenceHelper()
-              .saveSupervisorId(supervisorDoc['id']); //Corrected line
-          await SharedPreferenceHelper()
-              .saveUserPhoneNumber(supervisorDoc['PhoneNumber']); //Correct line
+              .saveUserPhoneNumber(supervisorPhone); // Save the Phone Number
+
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => BottomNav()),
+            );
+          }
         } else {
           print("Supervisor document not found!");
           if (mounted) {
@@ -71,14 +79,7 @@ class _LoginState extends State<Login> {
                   "Supervisor document not found. Please contact the admin."),
             ));
           }
-          return;
-        }
-
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => HomePage()),
-          );
+          return; // Important: Don't proceed if no document is found.
         }
       } on FirebaseAuthException catch (e) {
         String errorMessage = "Login failed";

@@ -14,8 +14,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String? supervisorUid;
-  String? supervisorPhone;
+  String? supervisorUid; // Firebase Auth UID
+  String? supervisorPhone; //  Phone Number
 
   @override
   void initState() {
@@ -24,43 +24,17 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> getSupervisorDetails() async {
-    supervisorUid = await SharedPreferenceHelper().getUserId(); // Get UID
+    supervisorUid = await SharedPreferenceHelper().getUserId();
+    supervisorPhone = await SharedPreferenceHelper()
+        .getUserPhoneNumber(); //Get phonenumber from sharedpreferences
 
-    if (supervisorUid != null) {
-      // Fetch supervisor document from Firestore using UID
-      DocumentSnapshot supervisorSnapshot = await FirebaseFirestore.instance
-          .collection('supervisors')
-          .doc(supervisorUid) // Use UID as document ID
-          .get();
-
-      if (supervisorSnapshot.exists) {
-        // Extract phone number from the document
-        setState(() {
-          supervisorPhone = supervisorSnapshot['PhoneNumber'];
-        });
-      } else {
-        print("Supervisor document not found!"); //Debug
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text(
-                    "Supervisor document not found! Log Out and try again")),
-          );
-        }
-      }
-    } else {
-      print("Supervisor Uid not found!"); //Debug
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("Supervisor ID is not found. Please re-login.")),
-        );
-      }
-    }
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    // Get today's date in the same format as stored in Firestore
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Warehouse - Home"),
@@ -75,12 +49,13 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Column(
+        // Removed SingleChildScrollView
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Text(
-              "Supervisor: ${supervisorPhone ?? 'Supervisor'}!",
+              "Supervisor: ${supervisorPhone ?? 'Supervisor'}!", // Show the supervisorPhone now
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -125,15 +100,18 @@ class _HomePageState extends State<HomePage> {
               }
 
               return Expanded(
+                // Added Expanded
                 child: ListView.builder(
                   shrinkWrap: true,
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics:
+                      const AlwaysScrollableScrollPhysics(), // Ensure scrolling works
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
                     var itemData = snapshot.data!.docs[index].data()
                         as Map<String, dynamic>;
 
                     return InkWell(
+                      // Changed to InkWell for tap feedback
                       onTap: () {
                         Navigator.push(
                           context,
@@ -151,7 +129,7 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Item Name: ${itemData['itemName'] ?? 'N/A'}",
+                                "Item Name: ${itemData['itemName'] ?? 'N/A'}", // changed to new field name
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold),
                               ),

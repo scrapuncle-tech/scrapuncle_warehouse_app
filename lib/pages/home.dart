@@ -3,7 +3,7 @@ import 'package:scrapuncle_warehouse/service/auth.dart';
 import 'package:scrapuncle_warehouse/service/shared_pref.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:scrapuncle_warehouse/pages/details.dart';
-import 'package:intl/intl.dart'; // Import intl package
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -13,8 +13,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String? supervisorUid; // Firebase Auth UID
-  String? supervisorPhone; //  Phone Number
+  String? supervisorUid;
+  String? supervisorPhone;
 
   @override
   void initState() {
@@ -25,7 +25,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> getSupervisorDetails() async {
     supervisorUid = await SharedPreferenceHelper().getUserId();
     supervisorPhone = await SharedPreferenceHelper()
-        .getUserPhoneNumber(); //Get phonenumber from sharedpreferences
+        .getUserPhoneNumber(); // Get the phone number
 
     setState(() {});
   }
@@ -33,7 +33,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     // Get today's date in the same format as stored in Firestore
-    String todayDate = DateFormat('yyyy-MM-dd - kk:mm').format(DateTime.now());
+    String todayDate =
+        DateFormat('yyyy-MM-dd').format(DateTime.now()); // Correct Date Format
 
     return Scaffold(
       appBar: AppBar(
@@ -49,13 +50,12 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Column(
-        // Removed SingleChildScrollView
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Text(
-              "Supervisor: ${supervisorPhone ?? 'Supervisor'}!", // Show the supervisorPhone now
+              "Supervisor: ${supervisorPhone ?? 'Supervisor'}!", // Display phone
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -75,8 +75,11 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 10),
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
-                .collection('whitems')
+                .collection('whpickup')
                 .where('supervisorPhoneNumber', isEqualTo: supervisorPhone)
+                .where('DateTime',
+                    isGreaterThanOrEqualTo:
+                        todayDate) // Corrected field name and comparison
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
@@ -100,18 +103,15 @@ class _HomePageState extends State<HomePage> {
               }
 
               return Expanded(
-                // Added Expanded
                 child: ListView.builder(
                   shrinkWrap: true,
-                  physics:
-                      const AlwaysScrollableScrollPhysics(), // Ensure scrolling works
+                  physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
                     var itemData = snapshot.data!.docs[index].data()
                         as Map<String, dynamic>;
 
                     return InkWell(
-                      // Changed to InkWell for tap feedback
                       onTap: () {
                         Navigator.push(
                           context,
@@ -129,12 +129,12 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Item Name: ${itemData['ItemName'] ?? 'N/A'}", // changed to new field name
+                                "Item Name: ${itemData['itemName'] ?? 'N/A'}", // Correct field name
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold),
                               ),
-
-                              // added the products' unit
+                              Text(
+                                  "Driver Number: ${itemData['driverPhoneNumber'] ?? 'N/A'}"),
                             ],
                           ),
                         ),

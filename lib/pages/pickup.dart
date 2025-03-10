@@ -274,7 +274,8 @@ class _PickupPageState extends State<PickupPage> {
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 textStyle: const TextStyle(fontSize: 16),
               ),
-              child: const Text("Add Details"),
+              child: const Text("Add Details",
+                  style: TextStyle(color: Colors.white)),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -284,8 +285,12 @@ class _PickupPageState extends State<PickupPage> {
             const SizedBox(height: 8),
             ElevatedButton.icon(
               onPressed: _pickImage,
-              icon: const Icon(Icons.camera_alt),
-              label: const Text("Take Photo"),
+              icon: const Icon(
+                Icons.camera_alt,
+                color: Colors.white,
+              ),
+              label: const Text("Take Photo",
+                  style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 padding:
@@ -347,8 +352,12 @@ class _PickupPageState extends State<PickupPage> {
             const SizedBox(height: 8),
             ElevatedButton.icon(
               onPressed: getDriverImage,
-              icon: const Icon(Icons.camera_alt),
-              label: const Text("Take Photo"),
+              icon: const Icon(
+                Icons.camera_alt,
+                color: Colors.white,
+              ),
+              label: const Text("Take Photo",
+                  style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 padding:
@@ -386,8 +395,12 @@ class _PickupPageState extends State<PickupPage> {
             const SizedBox(height: 8),
             ElevatedButton.icon(
               onPressed: getVehicleImage,
-              icon: const Icon(Icons.camera_alt),
-              label: const Text("Take Photo"),
+              icon: const Icon(
+                Icons.camera_alt,
+                color: Colors.white,
+              ),
+              label: const Text("Take Photo",
+                  style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 padding:

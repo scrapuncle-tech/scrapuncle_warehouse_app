@@ -238,7 +238,7 @@ class _PickupPageState extends State<PickupPage> {
                     horizontal: 20, vertical: 12), // Added some padding
                 textStyle: const TextStyle(fontSize: 16), // Adjusted font size
               ),
-              child: const Text("Add Details",
+              child: const Text("Add Items",
                   style: TextStyle(color: Colors.white)),
             ),
             Column(

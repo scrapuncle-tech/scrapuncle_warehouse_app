@@ -18,7 +18,7 @@ class Details extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Item Name: ${itemData['Name'] ?? 'N/A'}",
+              "Item Name: ${itemData['itemName'] ?? 'N/A'}", // Correct field name
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -26,14 +26,16 @@ class Details extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              "Weight/Quantity: ${itemData['WeightOrQuantity'] ?? 'N/A'}",
+              "Supervisor Phone: ${itemData['supervisorPhoneNumber'] ?? 'N/A'}", // Correct field name
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 10),
             Text(
-              "Pickup Agent Phone: ${itemData['PhoneNumber'] ?? 'N/A'}",
+              "Agent Phone: ${itemData['agentPhoneNumber'] ?? 'N/A'}", // Correct field name
               style: const TextStyle(fontSize: 16),
             ),
+            const SizedBox(height: 10),
+
             const SizedBox(height: 20),
             const Text(
               "Vehicle Information",
@@ -44,11 +46,11 @@ class Details extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              "Vehicle Number: ${itemData['VehicleNumber'] ?? 'N/A'}",
+              "Vehicle Number: ${itemData['vehicleNumber'] ?? 'N/A'}",
               style: const TextStyle(fontSize: 16),
             ),
-            if (itemData['VehicleImage'] != null &&
-                itemData['VehicleImage'].isNotEmpty)
+            if (itemData['vehicleImage'] != null &&
+                itemData['vehicleImage'].isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -59,10 +61,14 @@ class Details extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   Image.network(
-                    itemData['VehicleImage'],
+                    itemData['vehicleImage'], // Correct field name
                     height: 200,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                          Icons.error); // Placeholder for broken images
+                    },
                   ),
                 ],
               ),
@@ -76,11 +82,11 @@ class Details extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              "Driver Phone: ${itemData['DriverPhoneNumber'] ?? 'N/A'}",
+              "Driver Phone: ${itemData['driverPhoneNumber'] ?? 'N/A'}", // Correct field name
               style: const TextStyle(fontSize: 16),
             ),
-            if (itemData['DriverImage'] != null &&
-                itemData['DriverImage'].isNotEmpty)
+            if (itemData['driverImage'] != null &&
+                itemData['driverImage'].isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -91,10 +97,62 @@ class Details extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   Image.network(
-                    itemData['DriverImage'],
+                    itemData['driverImage'], // Correct field name
                     height: 200,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                          Icons.error); // Placeholder for broken images.
+                    },
+                  ),
+                ],
+              ),
+
+            // added a part where all the images collected from the pickup page is outputted
+            const SizedBox(height: 20),
+            const Text(
+              "Item Information",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            if (itemData['itemImages'] != null &&
+                (itemData['itemImages'] as List).isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Item Images:",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 5),
+                  Container(
+                    height: 200, // Set a fixed height for the horizontal list
+                    child: ListView.builder(
+                      scrollDirection:
+                          Axis.horizontal, // Display images horizontally
+                      itemCount: itemData['itemImages'].length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(
+                              right: 8.0), // Add some spacing
+                          child: Image.network(
+                            itemData['itemImages']
+                                [index], // Access each image URL
+                            height: 200,
+                            width: 200, // Adjust the image size as needed
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.error); // Placeholder
+                            },
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),

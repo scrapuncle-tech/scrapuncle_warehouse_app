@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:scrapuncle_warehouse/pages/bottom_nav.dart';
+import 'package:scrapuncle_warehouse/pages/home.dart';
 import 'package:scrapuncle_warehouse/service/database.dart'; // Import DatabaseMethods
 import 'package:scrapuncle_warehouse/pages/signup.dart';
 import 'package:scrapuncle_warehouse/service/shared_pref.dart'; // Import SharedPreferenceHelper
@@ -67,7 +67,7 @@ class _LoginState extends State<Login> {
           if (mounted) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => BottomNav()),
+              MaterialPageRoute(builder: (context) => HomePage()),
             );
           }
         } else {
